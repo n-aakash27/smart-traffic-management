@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Traffic Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9e9e4;--panel:#f7f7f3;--ink:#22262b;--mute:#5d646c;--line:#c9c9c0;--paint:#e0a800;--go:#238a42;--stop:#c93a32;--amb:#d98a00;--road:#22262b;--roadtxt:#f7f7f3;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--panel:#1f2428;--ink:#ecece6;--mute:#9aa1a8;--line:#363d43;--paint:#f2c230;--go:#3fbf63;--stop:#ef5b52;--amb:#f2a93b;--road:#0e1012;--roadtxt:#ecece6}}
+:root[data-theme="dark"]{--bg:#15181b;--panel:#1f2428;--ink:#ecece6;--mute:#9aa1a8;--line:#363d43;--paint:#f2c230;--go:#3fbf63;--stop:#ef5b52;--amb:#f2a93b;--road:#0e1012;--roadtxt:#ecece6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+header{background:var(--road);color:var(--roadtxt);padding:22px 20px 0;border-bottom:6px solid var(--paint)}
+header h1{font:700 clamp(28px,6vw,44px)/1.05 "Barlow Condensed",Impact,sans-serif;margin:0 0 4px;letter-spacing:.01em}
+header p{margin:0 0 16px;color:var(--mute);max-width:60ch}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav button{font:600 15px Barlow,sans-serif;border:0;background:transparent;color:var(--mute);padding:10px 16px;cursor:pointer;border-radius:8px 8px 0 0;white-space:nowrap}
+nav button[aria-selected=true]{background:var(--bg);color:var(--ink)}
+nav button:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--paint);outline-offset:2px}
+main{max-width:980px;margin:0 auto;padding:20px}
+section{display:none}section.on{display:block}
+h2{font:700 26px "Barlow Condensed",sans-serif;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 16px;max-width:70ch}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.card h3{margin:0 0 8px;font:700 19px "Barlow Condensed",sans-serif}
+svg text{font:600 14px Barlow,sans-serif}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+select,button.b{font:500 15px Barlow,sans-serif;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+button.b{background:var(--ink);color:var(--bg);cursor:pointer;border-color:var(--ink);font-weight:600}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg)}
+td.hl{background:var(--paint);color:#22262b;font-weight:600}
+.ok{color:var(--go);font-weight:600}.bad{color:var(--stop);font-weight:600}
+.light{display:flex;gap:8px;background:var(--road);padding:10px;border-radius:30px;width:max-content}
+.light i{width:28px;height:28px;border-radius:50%;background:#444;opacity:.35}
+.light i.on{opacity:1}.r.on{background:var(--stop)}.g.on{background:var(--go)}.a.on{background:var(--amb)}
+.bar{height:14px;border-radius:3px;background:var(--paint);margin:4px 0 10px}
+.bar.f{background:var(--stop)}.bar.ad{background:var(--go)}
+label.chk{display:flex;gap:8px;align-items:center;margin:6px 0}
+code{background:var(--bg);padding:1px 6px;border-radius:4px;font-size:14px}
+.note{font-size:14px;color:var(--mute)}
+.one{max-width:640px}
+.field{display:flex;flex-direction:column;gap:4px;margin:0 0 12px}
+.field label{font-weight:600;font-size:14px;color:var(--mute)}
+.field select{width:100%}
+.result{background:var(--bg);border-radius:8px;padding:14px;margin:14px 0 8px}
+.result p{margin:6px 0}.result .big{font:700 24px "Barlow Condensed",sans-serif;margin:10px 0 2px}
+.lamps{display:flex;gap:22px}
+.lamp{display:flex;align-items:center;gap:8px;font-weight:600}
+.lamp i{width:22px;height:22px;border-radius:50%;display:inline-block}
+.lamp i.g{background:var(--go)}.lamp i.r{background:var(--stop)}
+.rule{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.rule:last-of-type{border-bottom:0}
+details{margin-top:10px}summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:14px}
+
+canvas{width:100%;max-width:340px;aspect-ratio:1;display:block;margin:0 auto 10px;border-radius:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.two{grid-template-columns:1fr}}
+.card h2{margin:0 0 8px;font:700 19px "Barlow Condensed",sans-serif}
+.b.p{background:var(--ink);color:var(--bg)}
+dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0}
+dt{color:var(--mute)}dd{margin:0;font-weight:700;text-align:right}
+
+@media (prefers-reduced-motion:no-preference){.bar{transition:width .5s}}
+</style>
+</head>
+<body>
+<header>
+<h1>Smart Traffic Management System</h1>
+<p>Discrete Mathematics capstone: a city grid modelled with graphs, logic, relations, groups and counting.</p>
+<nav role="tablist">
+<button role="tab" aria-selected="true" data-t="live">Intersection</button>
+<button role="tab" aria-selected="false" data-t="net">Road network</button>
+<button role="tab" aria-selected="false" data-t="sig">Signal logic</button>
+<button role="tab" aria-selected="false" data-t="sim">Fixed vs adaptive</button>
+</nav>
+</header>
+<main>
+
+<section id="live" class="on">
+<div class="row">
+<button class="b p" id="play">Pause</button>
+<button class="b" id="reset">New scenario</button>
+<select id="spd" aria-label="Speed"><option value="1">1×</option><option value="3" selected>3×</option><option value="8">8×</option></select>
+<select id="ad" aria-label="Ambulance approach"><option value="1">East–West</option><option value="0">North–South</option></select>
+<button class="b" id="amb">Send ambulance</button>
+</div>
+<div class="two">
+<div class="card"><h2>Fixed-time (20 s per side)</h2><canvas id="c0" width="600" height="600"></canvas><dl id="s0"></dl></div>
+<div class="card"><h2>Adaptive (queue-based)</h2><canvas id="c1" width="600" height="600"></canvas><dl id="s1"></dl></div>
+</div>
+<p class="note">Both intersections get the same cars. North–South is busier. Adaptive serves the longer queue and gives an ambulance an immediate green.</p>
+</section>
+
+<section id="net">
+<h2>Road network as a weighted graph</h2>
+<p class="sub">Junctions are vertices, roads are edges, weights are travel time in minutes. Click a road to close it for maintenance.</p>
+<div class="grid">
+<div>
+<div class="card"><svg id="map" viewBox="0 0 440 340" width="100%" role="img" aria-label="Road graph"></svg></div>
+<div class="card scroll"><h3>Weight (adjacency) matrix</h3><div id="mat"></div></div>
+</div>
+<div>
+<div class="card"><h3>Shortest route (Dijkstra)</h3>
+<div class="row"><select id="from" aria-label="From"></select><span>to</span><select id="to" aria-label="To"></select></div>
+<div id="route"></div></div>
+<div class="card"><h3>Connectivity</h3><div id="conn"></div></div>
+<div class="card"><h3>Counting (Unit III)</h3><div id="cnt"></div></div>
+</div>
+</div>
+</section>
+
+<section id="sig">
+<h2>How the signals decide</h2>
+<p class="sub">Tell the controller what the sensors see. It picks which road gets green.</p>
+<div class="one">
+<div class="card"><h3>Try it</h3>
+<div class="field"><label for="cur">Green right now</label><select id="cur"><option value="NS">North–South</option><option value="EW">East–West</option></select></div>
+<label class="chk"><input type="checkbox" id="q"> The queue is long</label>
+<div class="field"><label for="am">Ambulance</label><select id="am"><option value="none">None</option><option value="NS">Coming from North–South</option><option value="EW">Coming from East–West</option></select></div>
+<div id="dec" class="result"></div>
+<details><summary>Show the truth table</summary>
+<p class="note">Safety rule: both directions must never be green together. Only the first row breaks it.</p>
+<div class="scroll"><table id="tt"></table></div></details>
+</div>
+
+<div class="card"><h3>The rules, in plain words</h3>
+<div class="rule"><span>Ambulance coming? It goes first.</span><code>a → priority green</code></div>
+<div class="rule"><span>Queue is long? Keep green a bit longer.</span><code>q → extend green</code></div>
+<div class="rule"><span>Never green both ways at once.</span><code>¬(NS ∧ EW)</code></div>
+<p class="note">If two rules apply, the higher one wins: Ambulance, then Long queue, then Normal cycle.</p>
+</div>
+
+<div class="card"><h3>The light cycle</h3>
+<div class="light" id="lt"><i class="r"></i><i class="g"></i><i class="a"></i></div>
+<div class="row" style="margin-top:12px"><button class="b" id="step">Next light</button><span id="ph"></span></div>
+<p class="note">Red, then green, then amber, then back to red. After 3 steps it returns to the start, which is why mathematicians call it a cyclic group.</p>
+<details><summary>Show the group table</summary><div class="scroll"><table id="cay"></table></div>
+<p class="note">g means "go to the next light". g³ = e means three steps return to the start.</p></details>
+</div>
+</div>
+</section>
+
+<section id="sim">
+<h2>Fixed-time vs adaptive signals</h2>
+<p class="sub">One intersection, 600 seconds, the same random arrivals for both controllers. North–South is busier than East–West.</p>
+<div class="card">
+<div class="row"><button class="b" id="run">Run new scenario</button><span class="note" id="seedn"></span></div>
+<div id="res"></div></div>
+<div class="card"><h3>What the controllers do</h3>
+<p><b>Fixed:</b> switches every 20 s regardless of queues.<br><b>Adaptive:</b> holds green at least 6 s, then switches when the other side has the longer queue (or the current side is empty), and never holds beyond 30 s. Each switch costs 3 s of amber.</p>
+<p class="note">Average wait is total queue-time divided by vehicles that arrived (Little's law).</p></div>
+</section>
+</main>
+
+<script>
+// ---------- tabs
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));
+});
+
+// ---------- graph
+const P={A:[60,60],B:[200,40],C:[70,190],D:[220,170],E:[110,300],F:[250,290],G:[380,200]};
+const V=Object.keys(P);
+const E=[['A','B',4],['A','C',3],['B','D',5],['C','D',4],['C','E',6],['D','F',3],['E','F',2],['F','G',4],['D','G',7]];
+const closed=new Set();
+const fromS=document.getElementById('from'),toS=document.getElementById('to');
+V.forEach(v=>{fromS.add(new Option(v,v));toS.add(new Option(v,v))});
+fromS.value='A';toS.value='G';
+fromS.onchange=toS.onchange=drawNet;
+
+function adj(){const g={};V.forEach(v=>g[v]=[]);E.forEach(([a,b,w],i)=>{if(!closed.has(i)){g[a].push([b,w]);g[b].push([a,w])}});return g}
+function dijkstra(g,s,t){
+  const d={},p={},done=new Set();V.forEach(v=>d[v]=Infinity);d[s]=0;
+  while(true){
+    let u=null;V.forEach(v=>{if(!done.has(v)&&d[v]<Infinity&&(u===null||d[v]<d[u]))u=v});
+    if(u===null||u===t)break;done.add(u);
+    g[u].forEach(([v,w])=>{if(d[u]+w<d[v]){d[v]=d[u]+w;p[v]=u}});
+  }
+  if(d[t]===Infinity)return null;
+  const path=[t];while(path[0]!==s)path.unshift(p[path[0]]);
+  return{path,cost:d[t]};
+}
+function reach(g,s){const seen=new Set([s]),st=[s];while(st.length){const u=st.pop();g[u].forEach(([v])=>{if(!seen.has(v)){seen.add(v);st.push(v)}})}return seen}
+function countPaths(g,s,t,seen=new Set([s])){
+  if(s===t)return 1;let n=0;
+  g[s].forEach(([v])=>{if(!seen.has(v)){seen.add(v);n+=countPaths(g,v,t,seen);seen.delete(v)}});return n;
+}
+function drawNet(){
+  const g=adj(),s=fromS.value,t=toS.value,r=dijkstra(g,s,t);
+  const onPath=new Set();
+  if(r)for(let i=0;i<r.path.length-1;i++)onPath.add([r.path[i],r.path[i+1]].sort().join(''));
+  let svg='';
+  E.forEach(([a,b,w],i)=>{
+    const [x1,y1]=P[a],[x2,y2]=P[b],cl=closed.has(i),hl=onPath.has([a,b].sort().join(''));
+    const col=cl?'var(--stop)':hl?'var(--paint)':'var(--mute)';
+    svg+=`<g style="cursor:pointer" data-e="${i}" tabindex="0" role="button" aria-label="Road ${a}${b}, ${w} minutes, ${cl?'closed':'open'}">
+    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="22"/>
+    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${hl?7:4}" ${cl?'stroke-dasharray="6 6"':''}/>
+    <text x="${(x1+x2)/2}" y="${(y1+y2)/2-6}" text-anchor="middle" fill="var(--ink)">${w}</text></g>`;
+  });
+  V.forEach(v=>{const [x,y]=P[v];
+    svg+=`<circle cx="${x}" cy="${y}" r="17" fill="${v===s||v===t?'var(--paint)':'var(--road)'}"/><text x="${x}" y="${y+5}" text-anchor="middle" fill="${v===s||v===t?'#22262b':'var(--roadtxt)'}">${v}</text>`;
+  });
+  const m=document.getElementById('map');m.innerHTML=svg;
+  m.querySelectorAll('[data-e]').forEach(el=>{const f=()=>{const i=+el.dataset.e;closed.has(i)?closed.delete(i):closed.add(i);drawNet()};
+    el.onclick=f;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
+  document.getElementById('route').innerHTML=r
+    ?`<p><b>${r.path.join(' → ')}</b><br>Total travel time: <b>${r.cost} min</b></p>`
+    :`<p class="bad">No route: ${s} and ${t} are disconnected.</p>`;
+  const rc=reach(g,'A');
+  document.getElementById('conn').innerHTML=rc.size===V.length
+    ?`<p class="ok">Connected. All ${V.length} junctions reachable.</p>`
+    :`<p class="bad">Disconnected. Unreachable from A: ${V.filter(v=>!rc.has(v)).join(', ')}.</p>`;
+  document.getElementById('conn').innerHTML+=`<p class="note">Closed roads: ${closed.size?[...closed].map(i=>E[i][0]+E[i][1]).join(', '):'none'}</p>`;
+  document.getElementById('cnt').innerHTML=`<p>Simple routes from ${s} to ${t}: <b>${s===t?1:countPaths(g,s,t)}</b></p>
+  <p>Orderings of 4 signal phases: 4! = <b>24</b></p>`;
+  let h='<table><tr><th></th>'+V.map(v=>`<th>${v}</th>`).join('')+'</tr>';
+  V.forEach(a=>{h+=`<tr><th>${a}</th>`;V.forEach(b=>{
+    const idx=E.findIndex(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+    const c=a===b?0:(idx>=0&&!closed.has(idx)?E[idx][2]:'–');
+    h+=`<td class="${onPath.has([a,b].sort().join(''))&&a!==b?'hl':''}">${c}</td>`});h+='</tr>'});
+  document.getElementById('mat').innerHTML=h+'</table>';
+}
+drawNet();
+
+// ---------- signal logic (plain version)
+const $=id=>document.getElementById(id);
+const side={NS:'North–South',EW:'East–West'};
+function logic(){
+  const long=$('q').checked,am=$('am').value,cur=$('cur').value;
+  let green,why;
+  if(am!=='none'){green=am;why=`An ambulance is coming from ${side[am]}, so it gets green first.`}
+  else if(long){green=cur;why=`The queue is long, so ${side[cur]} keeps its green a bit longer.`}
+  else{green=cur;why='Nothing special is happening, so the normal cycle continues.'}
+  const ns=green==='NS',ew=!ns;
+  const lamp=(on,l)=>`<div class="lamp"><i class="${on?'g':'r'}"></i><span>${l}</span></div>`;
+  $('dec').innerHTML=`<div class="lamps">${lamp(ns,'North–South')}${lamp(ew,'East–West')}</div>
+  <p class="big">Green: ${side[green]}</p><p>${why}</p><p class="ok">Safe: only one direction is green.</p>`;
+  let t='<tr><th>NS green</th><th>EW green</th><th>Both green?</th><th>Allowed?</th></tr>';
+  [[1,1],[1,0],[0,1],[0,0]].forEach(([x,y])=>{const hl=(x===+ns&&y===+ew);
+    t+=`<tr><td class="${hl?'hl':''}">${x?'Yes':'No'}</td><td class="${hl?'hl':''}">${y?'Yes':'No'}</td><td>${x&&y?'Yes':'No'}</td><td>${x&&y?'<span class="bad">No</span>':'Yes'}</td></tr>`});
+  $('tt').innerHTML=t;
+}
+['q','am','cur'].forEach(i=>$(i).onchange=logic);logic();
+
+const names=['Red','Green','Amber'];let ph=0;
+function light(){document.querySelectorAll('#lt i').forEach((el,i)=>el.classList.toggle('on',i===ph));
+  $('ph').textContent=`Now: ${names[ph]}`}
+$('step').onclick=()=>{ph=(ph+1)%3;light()};light();
+(function(){const el=['e','g','g²'];let t='<tr><th>∘</th>'+el.map(x=>`<th>${x}</th>`).join('')+'</tr>';
+  for(let i=0;i<3;i++){t+=`<tr><th>${el[i]}</th>`+[0,1,2].map(j=>`<td>${el[(i+j)%3]}</td>`).join('')+'</tr>'}
+  $('cay').innerHTML=t})();
+
+// ---------- simulation
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function sim(mode,arr){
+  const q=[0,0];let g=0,held=0,lost=0,served=0,qt=0,arrived=0;
+  for(let t=0;t<600;t++){
+    q[0]+=arr[0][t];q[1]+=arr[1][t];arrived+=arr[0][t]+arr[1][t];
+    if(lost>0){lost--}
+    else{
+      if(t%2===0&&q[g]>0){q[g]--;served++}
+      held++;
+      let sw=false;
+      if(mode==='fixed')sw=held>=20;
+      else sw=held>=30||(held>=6&&(q[1-g]>q[g]+1||(q[g]===0&&q[1-g]>0)));
+      if(sw){g=1-g;held=0;lost=3}
+    }
+    qt+=q[0]+q[1];
+  }
+  return{wait:qt/arrived,served,arrived,left:q[0]+q[1]};
+}
+let seed=7;
+function run(){
+  const r=rng(seed),arr=[[],[]];
+  for(let t=0;t<600;t++){arr[0].push(r()<0.28?1:0);arr[1].push(r()<0.10?1:0)}
+  const f=sim('fixed',arr),a=sim('adaptive',arr);
+  const mw=Math.max(f.wait,a.wait),ms=Math.max(f.served,a.served);
+  $('seedn').textContent=`Scenario ${seed} · ${f.arrived} vehicles arrived`;
+  $('res').innerHTML=`<h3>Average wait (seconds)</h3>
+  <div>Fixed: <b>${f.wait.toFixed(1)}</b></div><div class="bar f" style="width:${f.wait/mw*100}%"></div>
+  <div>Adaptive: <b>${a.wait.toFixed(1)}</b></div><div class="bar ad" style="width:${a.wait/mw*100}%"></div>
+  <h3>Vehicles served</h3>
+  <div>Fixed: <b>${f.served}</b></div><div class="bar f" style="width:${f.served/ms*100}%"></div>
+  <div>Adaptive: <b>${a.served}</b></div><div class="bar ad" style="width:${a.served/ms*100}%"></div>
+  <p>Adaptive changes average wait by <b>${((a.wait-f.wait)/f.wait*100).toFixed(0)}%</b> and still queued at the end: fixed ${f.left}, adaptive ${a.left}.</p>`;
+}
+$('run').onclick=()=>{seed=Math.floor(Math.random()*9000)+1;run()};run();
+// ---------- live intersection (animated)
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let aseed=7,rnd,arrs,T,S,playing=true,acc=0,last=performance.now();
+const mk=()=>({q:[0,0],g:0,held:0,lost:0,served:0,qt:0,arr:0,amb:null,ambW:null,cross:[]});
+function reset(){rnd=rng(aseed);arrs=[];T=0;S=[mk(),mk()]}
+const getArr=t=>{while(arrs.length<=t)arrs.push([rnd()<.28?1:0,rnd()<.10?1:0]);return arrs[t]};
+function step(s,mode,a,t){
+  s.q[0]+=a[0];s.q[1]+=a[1];s.arr+=a[0]+a[1];
+  if(s.amb)s.amb.w++;
+  if(s.lost>0)s.lost--;
+  else{
+    if(t%2===0){
+      if(s.amb&&s.amb.d===s.g){s.cross.push({d:s.g,p:0,a:1});s.ambW=s.amb.w;s.amb=null;s.served++}
+      else if(s.q[s.g]>0){s.q[s.g]--;s.served++;s.cross.push({d:s.g,p:0})}
+    }
+    s.held++;
+    let sw;
+    if(mode===0)sw=s.held>=20;
+    else if(s.amb)sw=s.amb.d!==s.g;
+    else sw=s.held>=30||(s.held>=6&&(s.q[1-s.g]>s.q[s.g]+1||(s.q[s.g]===0&&s.q[1-s.g]>0)));
+    if(sw){s.g=1-s.g;s.held=0;s.lost=3}
+  }
+  s.qt+=s.q[0]+s.q[1]+(s.amb?1:0);
+}
+function tick(){const a=getArr(T);S.forEach((s,m)=>step(s,m,a,T));T++;stats()}
+function stats(){S.forEach((s,m)=>{
+  $('s'+m).innerHTML=`<dt>Average wait</dt><dd>${s.arr?(s.qt/s.arr).toFixed(1):'0.0'} s</dd>
+  <dt>Vehicles served</dt><dd>${s.served}</dd>
+  <dt>Waiting now</dt><dd>${s.q[0]+s.q[1]+(s.amb?1:0)}</dd>
+  <dt>Ambulance wait</dt><dd>${s.amb?s.amb.w+' s…':s.ambW===null?'–':s.ambW+' s'}</dd>`})}
+$('amb').onclick=()=>S.forEach(s=>{if(!s.amb){s.amb={d:+$('ad').value,w:0};s.arr++}});
+$('reset').onclick=()=>{aseed=Math.floor(Math.random()*9000)+1;reset();stats()};
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play'};
+
+// ---------- drawing
+const dpr=2,cols=['#5b7fa6','#a65b5b','#6b9a6b','#a6945b','#7d6ba6','#5ba69c'];
+function draw(cv,s){
+  const c=cv.getContext('2d'),css=getComputedStyle(document.documentElement),v=n=>css.getPropertyValue(n).trim();
+  c.setTransform(dpr,0,0,dpr,0,0);
+  c.fillStyle=v('--bg');c.fillRect(0,0,300,300);
+  c.fillStyle=v('--road');c.fillRect(125,0,50,300);c.fillRect(0,125,300,50);
+  c.strokeStyle=v('--paint');c.setLineDash([8,8]);c.lineWidth=1.5;
+  c.beginPath();c.moveTo(150,0);c.lineTo(150,125);c.moveTo(150,175);c.lineTo(150,300);c.moveTo(0,150);c.lineTo(125,150);c.moveTo(175,150);c.lineTo(300,150);c.stroke();c.setLineDash([]);
+  c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.moveTo(150,178);c.lineTo(175,178);c.moveTo(122,150);c.lineTo(122,175);c.stroke();
+  const car=(x,y,w,h,col,amb)=>{c.fillStyle=amb?'#fff':col;c.fillRect(x-w/2,y-h/2,w,h);
+    if(amb){c.fillStyle='#c93a32';c.fillRect(x-w/2,y-h/2,w,3);c.fillRect(x-w/2,y+h/2-3,w,3)}};
+  for(let d=0;d<2;d++){
+    const n=Math.min(s.q[d],10);
+    for(let i=0;i<n;i++){const k=i+(s.amb&&s.amb.d===d?1:0);
+      d===0?car(162,190+k*17,12,14,cols[i%6]):car(110-k*17,162,14,12,cols[(i+2)%6])}
+    if(s.amb&&s.amb.d===d)d===0?car(162,190,12,14,0,1):car(110,162,14,12,0,1);
+    if(s.q[d]>10){c.fillStyle=v('--ink');c.font='600 12px system-ui';
+      d===0?c.fillText('+'+(s.q[d]-10),170,290):c.fillText('+'+(s.q[d]-10),4,152)}
+  }
+  s.cross.forEach(x=>{const d=x.d;d===0?car(162,178-x.p*220,12,14,cols[1],x.a):car(122+x.p*220,162,14,12,cols[3],x.a)});
+  const light=(d,x,y)=>{c.fillStyle=s.g===d&&s.lost===0?v('--go'):(s.lost>0&&s.g!==d)?v('--amb'):v('--stop');
+    c.beginPath();c.arc(x,y,6,0,7);c.fill()};
+  light(0,185,190);light(1,112,185);
+}
+function frame(now){
+  const dt=Math.min((now-last)/1000,.2);last=now;const sp=+$('spd').value;
+  if(playing){acc+=dt*sp;while(acc>=1){acc-=1;tick()}
+    S.forEach(s=>{s.cross.forEach(x=>x.p+=dt*sp*.5);s.cross=s.cross.filter(x=>x.p<1)})}
+  draw($('c0'),S[0]);draw($('c1'),S[1]);requestAnimationFrame(frame);
+}
+reset();stats();requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
